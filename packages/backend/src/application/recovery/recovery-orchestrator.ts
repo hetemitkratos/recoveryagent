@@ -119,7 +119,7 @@ export class RecoveryOrchestrator {
       message_text: aiRec.message?.text || null,
       message_tone: aiRec.message?.tone || null,
       requires_human_review: aiRec.requires_human_review || false,
-      model_name: this.config.GEMINI_MODEL,
+      model_name: this.config.OPENROUTER_API_KEY ? this.config.OPENROUTER_MODEL : this.config.GEMINI_MODEL,
       model_version: '1.0',
       prompt_version: 'recommendation-v1',
       is_fallback: isFallback,
@@ -252,8 +252,9 @@ export class RecoveryOrchestrator {
         risk_assessment: risk,
         available_actions: availableActions,
       });
-    } catch {
+    } catch (err) {
       // AI unavailable — use deterministic fallback
+      console.error('[AI] Recommendation failed, using fallback:', err instanceof Error ? err.message : String(err));
       isAIFallback = true;
       aiRec = this.deterministicFallback(diagnosis, risk, availableActions);
     }
