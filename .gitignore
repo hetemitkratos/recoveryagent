@@ -10,6 +10,8 @@ data/*.db-shm
 packages/backend/data/
 .DS_Store
 coverage/
+.devin/config.local.json
+.devin/mcp_config.local.json
 
 # Stale compiled test artifacts (tests should only contain .ts sources)
 tests/**/*.js
