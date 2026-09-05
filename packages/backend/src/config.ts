@@ -25,6 +25,11 @@ const configSchema = z.object({
   RAZORPAY_WEBHOOK_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-1.5-flash'),
+  // OpenRouter (alternative to Gemini — supports many models)
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().default('google/gemini-flash-2.0'),
+  OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
+  OPENROUTER_TIMEOUT_MS: z.coerce.number().default(15000),
   MAX_RETRIES: z.coerce.number().default(3),
   MAX_COMMUNICATIONS: z.coerce.number().default(5),
   MIN_COMMUNICATION_INTERVAL_HOURS: z.coerce.number().default(24),

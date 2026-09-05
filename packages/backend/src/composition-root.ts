@@ -22,6 +22,7 @@ import { AttributionEngine } from './domain/attribution/attribution-engine.js';
 import type { AIAdapter } from './infrastructure/ai/ai-adapter.js';
 import { MockAIAdapter } from './infrastructure/ai/mock-ai-adapter.js';
 import { GeminiAdapter } from './infrastructure/ai/gemini-adapter.js';
+import { OpenRouterAdapter } from './infrastructure/ai/openrouter-adapter.js';
 
 // Payment + notification providers
 import type { PaymentProvider } from './infrastructure/payment/payment-provider.js';
@@ -70,6 +71,15 @@ export interface AppContext {
 }
 
 function createAIAdapter(cfg: Config): AIAdapter {
+  // Priority: OpenRouter > Gemini > Mock fallback
+  if (cfg.OPENROUTER_API_KEY) {
+    return new OpenRouterAdapter({
+      OPENROUTER_API_KEY: cfg.OPENROUTER_API_KEY,
+      OPENROUTER_MODEL: cfg.OPENROUTER_MODEL,
+      OPENROUTER_BASE_URL: cfg.OPENROUTER_BASE_URL,
+      OPENROUTER_TIMEOUT_MS: cfg.OPENROUTER_TIMEOUT_MS,
+    });
+  }
   if (cfg.GEMINI_API_KEY) {
     return new GeminiAdapter({
       GEMINI_API_KEY: cfg.GEMINI_API_KEY,
