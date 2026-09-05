@@ -1,0 +1,232 @@
+import { sqliteTable, text, integer, uniqueIndex, real, index } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+
+export const customers = sqliteTable('customers', {
+  id: text('id').primaryKey(),
+  external_customer_id: text('external_customer_id').notNull().unique(),
+  name: text('name').notNull(),
+  email: text('email').notNull(),
+  phone: text('phone').notNull(),
+  preferred_channel: text('preferred_channel').notNull(),
+  opted_out: integer('opted_out', { mode: 'boolean' }).notNull().default(false),
+  lifetime_value: integer('lifetime_value').notNull().default(0),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const payments = sqliteTable('payments', {
+  id: text('id').primaryKey(),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  provider: text('provider').notNull(),
+  provider_payment_id: text('provider_payment_id').notNull().unique(),
+  provider_order_id: text('provider_order_id'),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status').notNull(),
+  failure_code: text('failure_code'),
+  failure_description: text('failure_description'),
+  failure_class: text('failure_class'),
+  attempt_number: integer('attempt_number').notNull().default(1),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+  metadata: text('metadata', { mode: 'json' }).notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  paid_at: integer('paid_at', { mode: 'timestamp' }),
+});
+
+export const subscriptions = sqliteTable('subscriptions', {
+  id: text('id').primaryKey(),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  provider: text('provider').notNull(),
+  provider_subscription_id: text('provider_subscription_id').notNull().unique(),
+  plan_id: text('plan_id').notNull(),
+  amount: integer('amount').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status').notNull(),
+  next_charge_at: integer('next_charge_at', { mode: 'timestamp' }),
+  failed_attempts: integer('failed_attempts').notNull().default(0),
+  max_attempts: integer('max_attempts').notNull().default(3),
+  retry_ceiling: integer('retry_ceiling').notNull().default(3),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const webhook_events = sqliteTable('webhook_events', {
+  id: text('id').primaryKey(),
+  source: text('source').notNull(),
+  source_event_id: text('source_event_id').notNull().unique(),
+  event_type: text('event_type').notNull(),
+  payload: text('payload', { mode: 'json' }).notNull(),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const recovery_sessions = sqliteTable('recovery_sessions', {
+  id: text('id').primaryKey(),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  payment_id: text('payment_id').references(() => payments.id),
+  subscription_id: text('subscription_id').references(() => subscriptions.id),
+  state: text('state').notNull(),
+  risk_score: integer('risk_score').notNull(),
+  recovery_probability: real('recovery_probability').notNull(),
+  expected_recoverable_revenue: integer('expected_recoverable_revenue').notNull(),
+  diagnosis: text('diagnosis'),
+  diagnosis_confidence: real('diagnosis_confidence'),
+  current_owner: text('current_owner'),
+  attempt_count: integer('attempt_count').notNull().default(0),
+  communication_count: integer('communication_count').notNull().default(0),
+  last_action_at: integer('last_action_at', { mode: 'timestamp' }),
+  next_action_at: integer('next_action_at', { mode: 'timestamp' }),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  closed_at: integer('closed_at', { mode: 'timestamp' }),
+  closure_reason: text('closure_reason'),
+}, (table) => ({
+  active_session_idx: uniqueIndex('sessions_active_uniq').on(table.customer_id, table.payment_id).where(sql`closed_at IS NULL`),
+}));
+
+export const recovery_actions = sqliteTable('recovery_actions', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  action_type: text('action_type').notNull(),
+  reason: text('reason').notNull(),
+  source: text('source').notNull(),
+  ai_recommendation_id: text('ai_recommendation_id'),
+  policy_decision_id: text('policy_decision_id'),
+  status: text('status').notNull(),
+  provider: text('provider'),
+  provider_reference: text('provider_reference'),
+  idempotency_key: text('idempotency_key').notNull().unique(),
+  payload: text('payload', { mode: 'json' }),
+  scheduled_at: integer('scheduled_at', { mode: 'timestamp' }),
+  executed_at: integer('executed_at', { mode: 'timestamp' }),
+  completed_at: integer('completed_at', { mode: 'timestamp' }),
+  failure_reason: text('failure_reason'),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const policy_decisions = sqliteTable('policy_decisions', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  action_id: text('action_id').notNull(),
+  decision: text('decision').notNull(),
+  rules_evaluated: text('rules_evaluated', { mode: 'json' }).notNull(),
+  blocking_reasons: text('blocking_reasons', { mode: 'json' }).notNull(),
+  policy_version: text('policy_version').notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const ai_recommendations = sqliteTable('ai_recommendations', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  diagnosis: text('diagnosis').notNull(),
+  diagnosis_confidence: real('diagnosis_confidence').notNull(),
+  recovery_probability: real('recovery_probability').notNull(),
+  recovery_confidence: real('recovery_confidence').notNull(),
+  recommended_action: text('recommended_action').notNull(),
+  action_confidence: real('action_confidence').notNull(),
+  reason_codes: text('reason_codes', { mode: 'json' }).notNull(),
+  message_text: text('message_text'),
+  message_tone: text('message_tone'),
+  requires_human_review: integer('requires_human_review', { mode: 'boolean' }).notNull(),
+  model_name: text('model_name').notNull(),
+  model_version: text('model_version').notNull(),
+  prompt_version: text('prompt_version').notNull(),
+  is_fallback: integer('is_fallback', { mode: 'boolean' }).notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const recovery_outcomes = sqliteTable('recovery_outcomes', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  action_id: text('action_id'),
+  result: text('result').notNull(),
+  payment_id: text('payment_id').unique(),
+  amount_recovered: integer('amount_recovered').notNull(),
+  currency: text('currency').notNull(),
+  payment_reference: text('payment_reference'),
+  attribution: text('attribution').notNull(),
+  attribution_evidence: text('attribution_evidence'),
+  observed_at: integer('observed_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const communication_events = sqliteTable('communication_events', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  channel: text('channel').notNull(),
+  template_id: text('template_id'),
+  message: text('message').notNull(),
+  provider: text('provider'),
+  provider_reference: text('provider_reference'),
+  status: text('status').notNull(),
+  sent_at: integer('sent_at', { mode: 'timestamp' }),
+  delivered_at: integer('delivered_at', { mode: 'timestamp' }),
+  opened_at: integer('opened_at', { mode: 'timestamp' }),
+  responded_at: integer('responded_at', { mode: 'timestamp' }),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+});
+
+export const promises_to_pay = sqliteTable('promises_to_pay', {
+  id: text('id').primaryKey(),
+  recovery_session_id: text('recovery_session_id').notNull().references(() => recovery_sessions.id),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  promised_date: integer('promised_date', { mode: 'timestamp' }).notNull(),
+  promised_amount: integer('promised_amount'),
+  source: text('source').notNull(),
+  source_text: text('source_text').notNull(),
+  confidence: real('confidence').notNull(),
+  status: text('status').notNull(),
+  created_at: integer('created_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
+  fulfilled_at: integer('fulfilled_at', { mode: 'timestamp' }),
+});
+
+export const audit_events = sqliteTable('audit_events', {
+  id: text('id').primaryKey(),
+  event_type: text('event_type').notNull(),
+  recovery_session_id: text('recovery_session_id'),
+  customer_id: text('customer_id'),
+  payment_id: text('payment_id'),
+  subscription_id: text('subscription_id'),
+  source_event_id: text('source_event_id'),
+  actor: text('actor').notNull(),
+  payload: text('payload', { mode: 'json' }).notNull(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull(),
+  previous_hash: text('previous_hash').notNull(),
+  hash: text('hash').notNull(),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+});
+
+export const experiments = sqliteTable('experiments', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  status: text('status').notNull(),
+  seed: integer('seed').notNull(),
+  control_count: integer('control_count').notNull(),
+  treatment_count: integer('treatment_count').notNull(),
+  started_at: integer('started_at', { mode: 'timestamp' }).notNull(),
+  completed_at: integer('completed_at', { mode: 'timestamp' }),
+  control_recovered_revenue: integer('control_recovered_revenue'),
+  treatment_recovered_revenue: integer('treatment_recovered_revenue'),
+  incremental_revenue: integer('incremental_revenue'),
+  control_recovery_rate: real('control_recovery_rate'),
+  treatment_recovery_rate: real('treatment_recovery_rate'),
+  incremental_lift_pp: real('incremental_lift_pp'),
+  roi: real('roi'),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+});
+
+export const experiment_assignments = sqliteTable('experiment_assignments', {
+  id: text('id').primaryKey(),
+  experiment_id: text('experiment_id').notNull().references(() => experiments.id),
+  customer_id: text('customer_id').notNull().references(() => customers.id),
+  payment_id: text('payment_id'),
+  variant: text('variant').notNull(),
+  assigned_at: integer('assigned_at', { mode: 'timestamp' }).notNull(),
+  is_demo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
+});

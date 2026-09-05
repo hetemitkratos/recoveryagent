@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+packages/backend/data/
+.DS_Store
+coverage/
+
+# Stale compiled test artifacts (tests should only contain .ts sources)
+tests/**/*.js
+tests/**/*.js.map
+tests/**/*.d.ts
+tests/**/*.d.ts.map

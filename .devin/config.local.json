@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(Select-Object)",
+      "Exec(Format-Table)",
+      "Exec(Get-ChildItem)"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "recovery-agent",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=packages/backend\" \"npm run dev --workspace=packages/frontend\"",
+    "build": "npm run build --workspace=packages/backend && npm run build --workspace=packages/frontend",
+    "test": "npm run test --workspace=packages/backend",
+    "typecheck": "npm run typecheck --workspace=packages/backend",
+    "lint": "npm run lint --workspace=packages/backend",
+    "db:migrate": "npm run db:migrate --workspace=packages/backend",
+    "db:generate": "npm run db:generate --workspace=packages/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,1 @@
+{"root":["./src/main.tsx","./src/api/client.ts","./src/components/ui.tsx","./src/lib/format.ts","./src/pages/dashboardpage.tsx","./src/pages/democontrolpanel.tsx","./src/pages/experimentpage.tsx","./src/pages/recoverydetailpage.tsx","./src/pages/recoveryqueuepage.tsx"],"version":"5.9.3"}

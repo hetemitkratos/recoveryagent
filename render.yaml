@@ -1,0 +1,60 @@
+# Render Blueprint — AI Revenue Recovery MVP
+# Deploy with: render blueprint deploy
+# Or connect your repo at https://dashboard.render.com and select "Blueprint"
+
+services:
+  - type: web
+    name: ai-revenue-recovery
+    runtime: docker
+    plan: starter
+    region: singapore  # closest to India; change as needed
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    # Persistent disk for SQLite database
+    disk:
+      name: recovery-data
+      mountPath: /app/data
+      sizeGB: 1
+    # Environment variables — set secrets in Render dashboard or via CLI
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        value: /app/data/recovery.db
+      - key: FRONTEND_DIST
+        value: /app/packages/frontend/dist
+      - key: DEMO_MODE
+        sync: false  # set to "false" when going live with Razorpay
+      - key: RAZORPAY_KEY_ID
+        sync: false  # set in Render dashboard
+      - key: RAZORPAY_KEY_SECRET
+        sync: false  # set in Render dashboard
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false  # set in Render dashboard
+      - key: GEMINI_API_KEY
+        sync: false  # set in Render dashboard
+      - key: GEMINI_MODEL
+        value: gemini-1.5-flash
+      - key: API_KEY
+        sync: false  # set in Render dashboard — required for /api/* auth in production
+      - key: CORS_ORIGINS
+        sync: false  # set to your Render URL, e.g. https://ai-revenue-recovery.onrender.com
+      - key: LOG_LEVEL
+        value: info
+      - key: RECOVERY_AUTOMATION_ENABLED
+        value: true
+      - key: MAX_RETRIES
+        value: 3
+      - key: MAX_COMMUNICATIONS
+        value: 5
+      - key: AI_CONFIDENCE_THRESHOLD
+        value: "0.70"
+      - key: PTP_CONFIDENCE_THRESHOLD
+        value: "0.80"
+      - key: HIGH_VALUE_THRESHOLD
+        value: "50000"
+      - key: ATTRIBUTION_WINDOW_HOURS
+        value: "72"
