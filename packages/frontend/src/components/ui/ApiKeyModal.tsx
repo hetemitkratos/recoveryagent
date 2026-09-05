@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { getApiKey } from '../../api/client';
 import { Card } from './Card';
 import { Button } from './Button';
 import { Key } from 'lucide-react';
@@ -13,10 +12,8 @@ export function ApiKeyModal() {
     const handleUnauthorized = () => setIsOpen(true);
     window.addEventListener('api:unauthorized', handleUnauthorized);
     
-    // Check initially if no key is found in any source
-    if (!getApiKey()) {
-      setIsOpen(true);
-    }
+    // We removed the upfront check so the app defaults to open, 
+    // and only blocks if the backend actively returns 401.
     
     return () => window.removeEventListener('api:unauthorized', handleUnauthorized);
   }, []);
