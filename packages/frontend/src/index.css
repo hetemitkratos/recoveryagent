@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-content bg-surface-muted antialiased selection:bg-brand selection:text-black;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-soft;
+  }
+  .glass-brand {
+    @apply bg-gradient-to-br from-brand to-brand-light/80 backdrop-blur-md border border-white/40 shadow-glow text-black;
+  }
+}
